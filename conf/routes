@@ -1,0 +1,5 @@
+
+POST     /persons/add               controllers.PersonController.create(name: String, age: Int)
+POST     /persons/                  controllers.PersonController.createFromJson
+
+GET      /persons                   controllers.PersonController.findByName(name: String)

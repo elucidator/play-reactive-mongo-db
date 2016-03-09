@@ -1,0 +1,27 @@
+# Example application using play 2.4 and reactive mongo
+
+# Configure MongoDB
+
+Just change it in application.conf
+```
+mongodb.uri = "mongodb://localhost/persons"
+```
+
+# Run it
+```
+sbt run
+```
+
+# Add some persons
+
+```
+curl -H "Content-Type: application/json" -X POST -d '{"name":"jason","age": 12}' http://localhost:9000/persons
+curl -X "POST" http://localhost:9000/persons/add\?name\=Jason%20Voorhees\&age\=31
+```
+
+# Search persons
+
+```
+curl http://localhost:9000/persons?name=jason
+```
+
