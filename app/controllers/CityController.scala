@@ -25,13 +25,14 @@ class CityController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implicit 
   }
 
   def createFromJson = Action.async(parse.json) { request =>
-    City.formatter.reads(request.body) match {
+    Json.fromJson[City](request.body) match {
       case JsSuccess(city, _) =>
         cities.insert(city).map { lastError =>
           Logger.debug(s"Successfully inserted with LastError: $lastError")
           Created
         }
-      case JsError(errors) => Future.successful(BadRequest("Could not build a city from the json provided. " + Errors.show(errors)))
+      case JsError(errors) =>
+        Future.successful(BadRequest("Could not build a city from the json provided. " + Errors.show(errors)))
     }
   }
 
