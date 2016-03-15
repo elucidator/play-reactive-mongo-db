@@ -16,7 +16,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class PersonController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implicit exec: ExecutionContext) extends Controller with MongoController with ReactiveMongoComponents {
 
-  def collection: JSONCollection = db.collection[JSONCollection]("persons")
+  def persons: JSONCollection = db.collection[JSONCollection]("persons")
 
   def create(name: String, age: Int) = Action.async {
     val json = Json.obj(
@@ -24,7 +24,7 @@ class PersonController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implici
       "age" -> age,
       "created" -> new java.util.Date().getTime())
 
-    collection.insert(json).map(lastError =>
+    persons.insert(json).map(lastError =>
       Ok("Mongo LastError: %s".format(lastError)))
   }
 
@@ -43,7 +43,7 @@ class PersonController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implici
         Reads.jsPut(__ \ "created", JsNumber(new java.util.Date().getTime())) reduce
 
     request.body.transform(transformer).map { result =>
-      collection.insert(result).map { lastError =>
+      persons.insert(result).map { lastError =>
         Logger.debug(s"Successfully inserted with LastError: $lastError")
         Created
       }
@@ -52,7 +52,7 @@ class PersonController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implici
 
   def findByName(name: String) = Action.async {
     // let's do our query
-    val cursor: Cursor[JsObject] = collection.
+    val cursor: Cursor[JsObject] = persons.
       // find all people with name `name`
       find(Json.obj("name" -> name)).
       // sort them by creation date
