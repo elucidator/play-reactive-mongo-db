@@ -3,3 +3,8 @@ POST     /persons/add               controllers.PersonController.create(name: St
 POST     /persons/                  controllers.PersonController.createFromJson
 
 GET      /persons                   controllers.PersonController.findByName(name: String)
+
+POST     /cities/add                controllers.CityController.create(name: String, population: Int)
+POST     /cities/                   controllers.CityController.createFromJson
+
+GET      /cities                    controllers.CityController.findByName(name: String)
