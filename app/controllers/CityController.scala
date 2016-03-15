@@ -14,6 +14,11 @@ import utils.Errors
 
 import scala.concurrent.{ExecutionContext, Future}
 
+
+/**
+  * Simple controller that directly stores and retrieves [models.City] instances into a MongoDB Collection
+  * Input is first converted into a city and then the city is converted to JsObject to be stored in MongoDB
+  */
 @Singleton
 class CityController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implicit exec: ExecutionContext) extends Controller with MongoController with ReactiveMongoComponents {
 

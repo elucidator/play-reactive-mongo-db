@@ -12,21 +12,7 @@ mongodb.uri = "mongodb://localhost/persons"
 sbt run
 ```
 
-# Add some persons (Person controller does not use a model, following the Coast to coast Json approach)
-
-```
-curl -H "Content-Type: application/json" -X POST -d '{"name":"jason","age": 12}' http://localhost:9000/persons/
-curl -X "POST" http://localhost:9000/persons/add\?name\=Jason%20Voorhees\&age\=31
-```
-
-# Search persons
-
-```
-curl http://localhost:9000/persons?name=jason
-```
-
-
-# Add some cities (Cities controller DOES use a model, showing how simple it is in Play to parse json data from the clients)
+# Add some cities (Cities controller uses a model, showing how simple it is in Play to parse json data from the clients)
 
 ```
 curl -H "Content-Type: application/json" -X POST -d '{"name":"london","population": 8539000}' http://localhost:9000/cities/
@@ -44,3 +30,17 @@ curl http://localhost:9000/cities?name=Paris
 curl -H "Content-Type: application/json" -X POST -d '{"name":"london"}' http://localhost:9000/cities/
 
 curl -H "Content-Type: application/json" -X POST -d '{"name":"london", "population": "x"}' http://localhost:9000/cities/
+
+# Add some persons (Person controller does not use a model, following the Coast to coast Json approach)
+
+```
+curl -H "Content-Type: application/json" -X POST -d '{"name":"jason","age": 12}' http://localhost:9000/persons/
+curl -X "POST" http://localhost:9000/persons/add\?name\=Jason%20Voorhees\&age\=31
+```
+
+# Search persons
+
+```
+curl http://localhost:9000/persons?name=jason
+```
+

@@ -13,6 +13,10 @@ import reactivemongo.play.json.collection.JSONCollection
 
 import scala.concurrent.{ExecutionContext, Future}
 
+/**
+  * A bit more complex controller using a Json Coast-to-coast approach. There is no model for Person and some data is created dynamically on creation
+  * Input is directly converted to JsObject to be stored in MongoDB
+  */
 @Singleton
 class PersonController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implicit exec: ExecutionContext) extends Controller with MongoController with ReactiveMongoComponents {
 
@@ -60,11 +64,8 @@ class PersonController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implici
       // perform the query and get a cursor of JsObject
       cursor[JsObject](ReadPreference.primary)
 
-    // gather all the JsObjects in a list
-    val futurePersonsList: Future[List[JsObject]] = cursor.collect[List]()
-
     // everything's ok! Let's reply with a JsValue
-    futurePersonsList.map { persons =>
+    cursor.collect[List]().map { persons =>
       Ok(Json.toJson(persons))
     }
   }
