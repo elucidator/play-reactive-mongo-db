@@ -45,6 +45,18 @@ curl -H "Content-Type: application/json" -X POST -d '{"name":"jason","age": 12}'
 curl -X "POST" http://localhost:9000/persons/add\?name\=Jason%20Voorhees\&age\=31
 ```
 
+## Add some persons in bulk
+
+```
+curl -H "Content-Type: application/json" -X POST -d '[{"name":"jacob","age": 35}, {"name":"rohit","age": 27}, {"name":"federico","age": 31}, {"name":"oliver","age": 33}]' http://localhost:9000/persons/bulk
+```
+
+Test invalid formats
+```
+curl -H "Content-Type: application/json" -X POST -d '[{"name": "pepe"}]' http://localhost:9000/persons/bulk
+```
+
+
 ## Search persons
 
 ```

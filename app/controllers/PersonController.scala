@@ -5,6 +5,7 @@ import javax.inject._
 import play.api.Logger
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import play.api.libs.json.Reads._
 import play.api.mvc._
 import play.modules.reactivemongo._
 import reactivemongo.api.{Cursor, ReadPreference}
@@ -20,6 +21,11 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class PersonController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implicit exec: ExecutionContext) extends Controller with MongoController with ReactiveMongoComponents {
 
+  val transformer: Reads[JsObject] =
+    Reads.jsPickBranch[JsString](__ \ "name") and
+      Reads.jsPickBranch[JsNumber](__ \ "age") and
+      Reads.jsPut(__ \ "created", JsNumber(new java.util.Date().getTime())) reduce
+
   def persons: JSONCollection = db.collection[JSONCollection]("persons")
 
   def create(name: String, age: Int) = Action.async {
@@ -33,25 +39,26 @@ class PersonController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implici
   }
 
   def createFromJson = Action.async(parse.json) { request =>
-    import play.api.libs.json.Reads._
-    /*
-     * request.body is a JsValue.
-     * There is no implicit Writes that turns this JsValue as a JsObject,
-     * so you can call insert() with this JsValue.
-     * (insert() takes a JsObject as parameter, or anything that can be
-     * turned into a JsObject using a Writes.)
-     */
-    val transformer: Reads[JsObject] =
-      Reads.jsPickBranch[JsString](__ \ "name") and
-        Reads.jsPickBranch[JsNumber](__ \ "age") and
-        Reads.jsPut(__ \ "created", JsNumber(new java.util.Date().getTime())) reduce
-
     request.body.transform(transformer).map { result =>
       persons.insert(result).map { lastError =>
         Logger.debug(s"Successfully inserted with LastError: $lastError")
-        Created
+        Created("Created 1 person")
       }
     }.getOrElse(Future.successful(BadRequest("invalid json")))
+  }
+
+  def createBulkFromJson = Action.async(parse.json) { request =>
+    //Transformation silent in case of failures.
+    val documents = for {
+      persons       <- request.body.asOpt[JsArray].toStream
+      maybePerson   <- persons.value
+      validPerson   <- maybePerson.transform(transformer).asOpt.toList
+    } yield validPerson
+
+    persons.bulkInsert(documents = documents, ordered = true).map { multiResult =>
+      Logger.debug(s"Successfully inserted with LastError: $multiResult")
+      Created(s"Created ${multiResult.n} person")
+    }
   }
 
   def findByName(name: String) = Action.async {
