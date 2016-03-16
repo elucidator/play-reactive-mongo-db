@@ -56,7 +56,7 @@ class PersonController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implici
     } yield validPerson
 
     persons.bulkInsert(documents = documents, ordered = true).map { multiResult =>
-      Logger.debug(s"Successfully inserted with LastError: $multiResult")
+      Logger.debug(s"Successfully inserted with multiResult: $multiResult")
       Created(s"Created ${multiResult.n} person")
     }
   }

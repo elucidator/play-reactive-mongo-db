@@ -9,6 +9,7 @@ import play.api.mvc._
 import play.modules.reactivemongo._
 import reactivemongo.api.{Cursor, ReadPreference}
 import reactivemongo.play.json._
+import reactivemongo.play.json.collection._
 import reactivemongo.play.json.collection.JSONCollection
 import utils.Errors
 
@@ -22,7 +23,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class CityController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implicit exec: ExecutionContext) extends Controller with MongoController with ReactiveMongoComponents {
 
-  def cities: JSONCollection = db.collection[JSONCollection]("city")
+  val cities: JSONCollection = db.collection[JSONCollection]("city")
 
   def create(name: String, population: Int) = Action.async {
     cities.insert(City(name, population)).map(lastError =>
@@ -34,7 +35,21 @@ class CityController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implicit 
       case JsSuccess(city, _) =>
         cities.insert(city).map { lastError =>
           Logger.debug(s"Successfully inserted with LastError: $lastError")
-          Created
+          Created("Created 1 city")
+        }
+      case JsError(errors) =>
+        Future.successful(BadRequest("Could not build a city from the json provided. " + Errors.show(errors)))
+    }
+  }
+
+  def createBulkFromJson = Action.async(parse.json) { request =>
+    Json.fromJson[Seq[City]](request.body) match {
+      case JsSuccess(newCities, _) =>
+        val documents = newCities.map(implicitly[cities.ImplicitlyDocumentProducer](_))
+
+        cities.bulkInsert(ordered = true)(documents: _*).map{ multiResult =>
+          Logger.debug(s"Successfully inserted with multiResult: $multiResult")
+          Created(s"Created ${multiResult.n} cities")
         }
       case JsError(errors) =>
         Future.successful(BadRequest("Could not build a city from the json provided. " + Errors.show(errors)))

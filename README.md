@@ -21,6 +21,11 @@ Cities controller uses a model, showing how simple it is in Play to parse json d
 curl -H "Content-Type: application/json" -X POST -d '{"name":"london","population": 8539000}' http://localhost:9000/cities/
 curl -X "POST" http://localhost:9000/cities/add\?name\=Paris&population\=2244000
 ```
+## Add some cities in bulk
+
+```
+curl -H "Content-Type: application/json" -X POST -d '[{"name":"tokyo","population": 13350000}, {"name":"osaka","population": 2665000}]' http://localhost:9000/cities/bulk
+```
 
 ## Search cities
 
@@ -33,6 +38,9 @@ curl http://localhost:9000/cities?name=Paris
 curl -H "Content-Type: application/json" -X POST -d '{"name":"london"}' http://localhost:9000/cities/
 
 curl -H "Content-Type: application/json" -X POST -d '{"name":"london", "population": "x"}' http://localhost:9000/cities/
+
+curl -H "Content-Type: application/json" -X POST -d '[{"name":"unknown"}]' http://localhost:9000/cities/bulk
+
 
 # Persons
 
