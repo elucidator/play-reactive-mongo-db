@@ -4,11 +4,11 @@ import javax.inject._
 
 import play.api.Logger
 import play.api.libs.functional.syntax._
-import play.api.libs.json._
 import play.api.libs.json.Reads._
+import play.api.libs.json._
 import play.api.mvc._
 import play.modules.reactivemongo._
-import reactivemongo.api.{Cursor, ReadPreference}
+import reactivemongo.api.ReadPreference
 import reactivemongo.play.json._
 import reactivemongo.play.json.collection.JSONCollection
 
@@ -26,7 +26,7 @@ class PersonController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implici
       Reads.jsPickBranch[JsNumber](__ \ "age") and
       Reads.jsPut(__ \ "created", JsNumber(new java.util.Date().getTime())) reduce
 
-  def persons: JSONCollection = db.collection[JSONCollection]("persons")
+  def personsFuture: Future[JSONCollection] = database.map(_.collection[JSONCollection]("persons"))
 
   def create(name: String, age: Int) = Action.async {
     val json = Json.obj(
@@ -34,17 +34,27 @@ class PersonController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implici
       "age" -> age,
       "created" -> new java.util.Date().getTime())
 
-    persons.insert(json).map(lastError =>
-      Ok("Mongo LastError: %s".format(lastError)))
+    for {
+      persons <- personsFuture
+      lastError <- persons.insert(json)
+    } yield Ok("Mongo LastError: %s".format(lastError))
+
   }
 
   def createFromJson = Action.async(parse.json) { request =>
-    request.body.transform(transformer).map { result =>
-      persons.insert(result).map { lastError =>
+    request.body.transform(transformer) match {
+      case JsSuccess(person, _) =>
+      for {
+        persons <- personsFuture
+        lastError <- persons.insert(person)
+      }
+      yield {
         Logger.debug(s"Successfully inserted with LastError: $lastError")
         Created("Created 1 person")
       }
-    }.getOrElse(Future.successful(BadRequest("invalid json")))
+      case _ =>
+        Future.successful(BadRequest("invalid json"))
+    }
   }
 
   def createBulkFromJson = Action.async(parse.json) { request =>
@@ -55,7 +65,10 @@ class PersonController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implici
       validPerson   <- maybePerson.transform(transformer).asOpt.toList
     } yield validPerson
 
-    persons.bulkInsert(documents = documents, ordered = true).map { multiResult =>
+    for {
+      persons <- personsFuture
+      multiResult <- persons.bulkInsert(documents = documents, ordered = true)
+    } yield {
       Logger.debug(s"Successfully inserted with multiResult: $multiResult")
       Created(s"Created ${multiResult.n} person")
     }
@@ -63,16 +76,17 @@ class PersonController @Inject()(val reactiveMongoApi: ReactiveMongoApi)(implici
 
   def findByName(name: String) = Action.async {
     // let's do our query
-    val cursor: Cursor[JsObject] = persons.
+    val cursor: Future[List[JsObject]] = personsFuture.flatMap{ persons =>
       // find all people with name `name`
-      find(Json.obj("name" -> name)).
+      persons.find(Json.obj("name" -> name)).
       // sort them by creation date
       sort(Json.obj("created" -> -1)).
       // perform the query and get a cursor of JsObject
-      cursor[JsObject](ReadPreference.primary)
+      cursor[JsObject](ReadPreference.primary).collect[List]()
+  }
 
     // everything's ok! Let's reply with a JsValue
-    cursor.collect[List]().map { persons =>
+    cursor.map { persons =>
       Ok(Json.toJson(persons))
     }
   }

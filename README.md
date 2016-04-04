@@ -1,4 +1,4 @@
-# Example application using play 2.4 and reactive mongo
+# Example application using play 2.5 and reactive mongo
 
 # Configure MongoDB
 
