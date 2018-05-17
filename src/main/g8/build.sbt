@@ -1,10 +1,12 @@
+
 name := """play-reactive-mongo-db"""
 
 version := "1.0-SNAPSHOT"
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala)
+lazy val root = (project in file(".")).enablePlugins(PlayScala).enablePlugins(DockerPlugin).enablePlugins(AshScriptPlugin)
 
 scalaVersion := "2.11.7"
+
 
 routesGenerator := InjectedRoutesGenerator
 
@@ -16,3 +18,5 @@ resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 
 
 scalacOptions in ThisBuild ++= Seq("-feature", "-language:postfixOps")
+
+dockerBaseImage := "openjdk:8-jre-alpine"
