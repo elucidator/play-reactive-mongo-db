@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reactive-mongo-config
+  namespace: test
+  labels:
+    app: reactive-mongo
+    env: test
+    tier: rest-service
+    type: config
+data:
+  MONGO_HOST: mongodb-mongodb
+  MONGO_PORT: 27017
+  PLAY_CRYPTO_SECRET: j19?nYP0V`[DZ75Xkot8vVn/:9>[FDPm;WkUEcn[MR<AaXE4bSHI4@jrWhC;aY[G
